@@ -25,16 +25,17 @@ byte "deposit"
 bnz main_l7
 err
 main_l7:
+callsub globalsafetychecks_0
 int 1
 return
 main_l8:
 int 1
 return
 main_l9:
-int 1
+int 0
 return
 main_l10:
-int 0
+int 1
 return
 main_l11:
 int 0
@@ -42,3 +43,39 @@ return
 main_l12:
 int 1
 return
+
+// global_safety_checks
+globalsafetychecks_0:
+global GroupSize
+int 1
+==
+assert
+txn Receiver
+global CurrentApplicationAddress
+==
+assert
+txn NumAppArgs
+int 3
+==
+assert
+txn NumAccounts
+int 1
+==
+assert
+txn NumApplications
+int 1
+==
+assert
+txn NumAssets
+int 1
+==
+assert
+txn AssetCloseTo
+global ZeroAddress
+==
+assert
+txn CloseRemainderTo
+global ZeroAddress
+==
+assert
+retsub
