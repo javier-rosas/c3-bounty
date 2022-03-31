@@ -77,29 +77,22 @@ global CurrentApplicationAddress
 assert
 retsub
 
-// asset_transfer
-assettransfer_1:
-store 3
+// opt_in_smart_contract_to_asa
+optinsmartcontracttoasa_1:
 store 2
-txn NumAssets
-int 1
-==
-assert
 itxn_begin
 int axfer
 itxn_field TypeEnum
 load 2
 itxn_field XferAsset
-load 3
+int 0
 itxn_field AssetAmount
-txn Sender
+global CurrentApplicationAddress
 itxn_field AssetSender
 global CurrentApplicationAddress
 itxn_field AssetReceiver
-int 0
+int 6000
 itxn_field Fee
-txn Sender
-itxn_field RekeyTo
 itxn_submit
 retsub
 
@@ -116,8 +109,6 @@ load 1
 bz transactionwithrekeyforasatransfer_2_l2
 txna ApplicationArgs 1
 btoi
-txna ApplicationArgs 2
-btoi
-callsub assettransfer_1
+callsub optinsmartcontracttoasa_1
 transactionwithrekeyforasatransfer_2_l2:
 retsub

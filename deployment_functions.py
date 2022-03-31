@@ -261,10 +261,11 @@ def create_asset(client, private_key):
         default_frozen=False,
         unit_name="C3pio",
         asset_name="C3coin",
-        manager=sender,
+        manager=None,
         reserve=sender,
-        freeze="",
-        clawback="",
+        freeze=None,
+        clawback=None,
+        strict_empty_address_check=False,
         url=None, 
         decimals=0)
 

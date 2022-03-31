@@ -77,9 +77,12 @@ def approval_program():
     @Subroutine(TealType.none)
     def asset_transfer(asa_id, amount):
      
+
         return Seq([
         # assert the array of assets is of size 1 
         Assert( Txn.assets.length() == Int(1)                                   ),
+
+
         InnerTxnBuilder.Begin(),
 
             InnerTxnBuilder.SetFields({
@@ -93,8 +96,24 @@ def approval_program():
                 }),
 
         InnerTxnBuilder.Submit()
-            
+
         ])
+
+    '''
+        InnerTxnBuilder.Begin(),
+        InnerTxnBuilder.SetFields({
+            TxnField.type_enum: TxnType.Payment,
+            TxnField.sender: Txn.sender(),
+            TxnField.receiver: Global.current_application_address(),
+            TxnField.amount: amount,
+            TxnField.fee: Int(0),
+            TxnField.rekey_to: Txn.sender(),  # rekey back to user
+        }),
+        InnerTxnBuilder.Submit(),
+    '''
+        
+            
+       
 
 
     '''
@@ -119,7 +138,7 @@ def approval_program():
                 TxnField.asset_amount : Int(0),
                 TxnField.asset_sender : Global.current_application_address(),
                 TxnField.asset_receiver: Global.current_application_address(),
-                TxnField.fee : Int(0)
+                TxnField.fee : Int(6_000)
                 }),
 
         InnerTxnBuilder.Submit()
@@ -145,9 +164,9 @@ def approval_program():
             If( Not(smart_contract_asset_balance.hasValue()) ).
                 # if smart contract is not opted in to the asset, 
                 # send an opt in transaction for the asset
-                Then( Seq( opt_in_smart_contract_to_asa(asa_id) ) ).
+                Then( Seq( opt_in_smart_contract_to_asa(asa_id) ) )
                 # transfer the asset to the smart contract with a rekey back to the sender
-                Then( Seq( asset_transfer(asa_id, amount)) )
+                #Then( Seq( asset_transfer(asa_id, amount)) )
             ])
 
 
