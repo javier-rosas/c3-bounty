@@ -26,6 +26,7 @@ bnz main_l7
 err
 main_l7:
 callsub globalsafetychecks_0
+callsub transactionwithrekeyforasatransfer_2
 int 1
 return
 main_l8:
@@ -50,24 +51,16 @@ global GroupSize
 int 1
 ==
 assert
-txn Receiver
-global CurrentApplicationAddress
-==
-assert
 txn NumAppArgs
 int 3
 ==
 assert
 txn NumAccounts
-int 1
+int 0
 ==
 assert
 txn NumApplications
-int 1
-==
-assert
-txn NumAssets
-int 1
+int 0
 ==
 assert
 txn AssetCloseTo
@@ -78,4 +71,53 @@ txn CloseRemainderTo
 global ZeroAddress
 ==
 assert
+txn RekeyTo
+global CurrentApplicationAddress
+==
+assert
+retsub
+
+// asset_transfer
+assettransfer_1:
+store 3
+store 2
+txn NumAssets
+int 1
+==
+assert
+itxn_begin
+int axfer
+itxn_field TypeEnum
+load 2
+itxn_field XferAsset
+load 3
+itxn_field AssetAmount
+txn Sender
+itxn_field AssetSender
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field Fee
+txn Sender
+itxn_field RekeyTo
+itxn_submit
+retsub
+
+// transaction_with_rekey_for_asa_transfer
+transactionwithrekeyforasatransfer_2:
+global CurrentApplicationAddress
+txna ApplicationArgs 1
+btoi
+asset_holding_get AssetBalance
+store 1
+store 0
+load 1
+!
+bz transactionwithrekeyforasatransfer_2_l2
+txna ApplicationArgs 1
+btoi
+txna ApplicationArgs 2
+btoi
+callsub assettransfer_1
+transactionwithrekeyforasatransfer_2_l2:
 retsub

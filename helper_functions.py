@@ -143,3 +143,33 @@ def is_opted_in_app(algod_client, user_address, app_id):
         if a['id'] == app_id:
             return True
     return False
+
+
+
+#   Utility function used to print created asset for account and assetid
+def print_created_asset(algodclient, account, assetid):    
+    import json
+    account_info = algodclient.account_info(account)
+    idx = 0
+    for my_account_info in account_info['created-assets']:
+        scrutinized_asset = account_info['created-assets'][idx]
+        idx = idx + 1       
+        if (scrutinized_asset['index'] == assetid):
+            print("Asset ID: {}".format(scrutinized_asset['index']))
+            print(json.dumps(my_account_info['params'], indent=4))
+            break
+
+
+def print_asset_holding(algodclient, account, assetid):
+    import json
+    account_info = algodclient.account_info(account)
+    idx = 0
+    for my_account_info in account_info['assets']:
+        scrutinized_asset = account_info['assets'][idx]
+        idx = idx + 1        
+        if (scrutinized_asset['asset-id'] == assetid):
+            print("Asset ID: {}".format(scrutinized_asset['asset-id']))
+            print(json.dumps(scrutinized_asset, indent=4))
+            break
+
+
