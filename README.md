@@ -1,6 +1,6 @@
 # C3 Bounty
 
-#### This smart contract is able to handle both AssetTxn's and PaymentTxn's. 
+## This smart contract is able to handle both AssetTxn's and PaymentTxn's. 
 
 ### Single AssetTxn explanation: 
 
