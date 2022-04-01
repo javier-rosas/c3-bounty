@@ -3,6 +3,14 @@ from pyteal import *
 
 def approval_program():
 
+    '''
+    Arguments:  None 
+    Returns: None 
+    
+    Explanation: 
+
+    Global safety checks to ensure security.
+    '''
     @Subroutine(TealType.none)
     def global_safety_checks():
 
@@ -27,10 +35,12 @@ def approval_program():
         ])
 
     '''
-    Argument: asa id (uint64)
+    Argument: None
     Returns: None 
 
-    Function makes an inner transaction that opts the smart contract to the ASA provided
+    Function makes an inner transaction (PaymentTxn) with the specified amount 
+    and a rekey back the sender. The inner transaction fee is 0 because the 
+    first sender transaction pays for all the fees.  
     '''
     @Subroutine(TealType.none)
     def inner_payment_transaction():
@@ -64,10 +74,9 @@ def approval_program():
 
     Explanation: 
 
-    Function makes an inner transaction from the sender to the smart contract. This 
-    is possible because the sender has rekeyed its account to the smart contract.The 
-    smart contract rekeys the account back to the sender. The inner transaction fees are
-    all 0 because the first sender transaction pays for all the fees.  
+    Sends the specified amount of the ASA to the smart contract, with a 
+    rekey back to the sender. The inner transaction fee is
+    0 because the first sender transaction pays for all the fees.  
     '''
     @Subroutine(TealType.none)
     def asset_transfer(asa_id, amount):
@@ -98,8 +107,8 @@ def approval_program():
 
     Explanation: 
 
-    If the smart contract is not opted in to the asset, this function makes an 
-    inner transaction that opts the smart contract to the ASA in question. 
+    This function makes an inner transaction that opts the smart contract 
+    to the ASA in question. 
     '''
     @Subroutine(TealType.none)
     def opt_in_smart_contract_to_asa(asa_id):
@@ -123,7 +132,20 @@ def approval_program():
 
 
 
+    '''
+    Argument: None 
+    Returns: None 
 
+    Explanation: 
+
+    If the smart contract is not opted in to the asset, this function makes an 
+    inner transaction that opts the smart contract to the ASA in question. Then it 
+    calls asset_transfer() subroutine, which sends the specified amount of the ASA 
+    to the smart contract, with a rekey back to the sender. 
+
+    If the smart contract is already opted in to the asset, only the asset_transfer() 
+    subroutine is called. 
+    '''
     @Subroutine(TealType.none)
     def transaction_with_rekey_for_asa_transfer():
 
@@ -150,6 +172,15 @@ def approval_program():
             ])
 
 
+    '''
+    Arguments: None 
+    Returns: None 
+
+    Explanation: 
+
+    This function determines if it is an AssetTxn or a PaymentTxn, and calls the
+    appropiate subroutines. 
+    '''
     @Subroutine(TealType.none)
     def transaction():
 
@@ -170,12 +201,17 @@ def approval_program():
                 ])
 
 
+    '''
+    This Sequence is the first to be called. It makes some global safety checks 
+    and then calls the transaction() subroutine. 
+    '''
     deposit = Seq([
         global_safety_checks(),
         transaction(),
         Return(Int(1))
     ])
 
+    
     program = Cond(
 
         [Txn.application_id() == Int(0), Return(Int(1))                         ],

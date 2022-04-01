@@ -1,9 +1,6 @@
 import json
-from algosdk import account, mnemonic
+from algosdk import mnemonic
 from algosdk.v2client import algod
-from algosdk.future import transaction
-from pyteal import compileTeal, Mode
-from contract import approval_program, clear_state_program
 from deployment_functions import *
 from helper_functions import *
 
