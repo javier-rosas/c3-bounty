@@ -16,3 +16,7 @@
   3) The smart contract calls **inner_payment_transaction** subroutine, which sends the specified amount of Algos from the user 
      account to the smart contract and rekeys the account back to the user. 
 
+### How to run the code: 
+
+  1) Simply run the **contract_execution.py** file. For convienience, this code has a test user and a test ASA which are used to send 
+     a single AssetTxn to the smart contract. The code also demonstrates a single PaymentTxn to the smart contract. 
