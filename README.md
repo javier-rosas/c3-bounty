@@ -20,5 +20,6 @@
 
 ### How to run the code: 
 
-  1) Simply run the **contract_execution.py** file. For convienience, this code has a test user and a test ASA which are used to send 
+  1) Run ```python3 -m pip install -r requirements.txt```
+  2) Simply run the **contract_execution.py** file. For convienience, this code has a test user and a test ASA which are used to send 
      a single AssetTxn to the smart contract. The code also demonstrates a single PaymentTxn to the smart contract. 
