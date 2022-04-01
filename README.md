@@ -1,5 +1,7 @@
 # C3 Bounty
 
+##### This smart contract is able to handle both AssetTxn's and PaymentTxn's. 
+
 ### Single AssetTxn explanation: 
 
   1) The user sends an ApplicationCallTxn to the smart contract with 3 app_args: ["deposit", "AssetTxn", amount].
