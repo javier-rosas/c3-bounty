@@ -1,6 +1,9 @@
 import json
-from algosdk import mnemonic
+from algosdk import account, mnemonic
 from algosdk.v2client import algod
+from algosdk.future import transaction
+from pyteal import compileTeal, Mode
+from contract import approval_program, clear_state_program
 from deployment_functions import *
 from helper_functions import *
 
@@ -21,11 +24,13 @@ f.close()
 
 
 # connection parameters
-algod_address = "http://localhost:4001"
-algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-
+algod_address = "https://testnet-algorand.api.purestake.io/ps2"
+algod_token = "rw0sHyrj9h5Fvro77Jpvu1uFHIyUWY8o5pTeSMWE"
+headers = {
+   "X-API-Key": algod_token,
+}
 # initialize an algodClient
-algod_client = algod.AlgodClient(algod_token, algod_address)
+algod_client = algod.AlgodClient(algod_token, algod_address, headers)
 
 
 # if test account is not opted in, call opt_in_app() with 
