@@ -85,7 +85,7 @@ def opt_in_app(client, private_key, index):
 
 
 # call application
-def call_app(client, private_key, index, app_args, rekey_to, foreign_assets):
+def call_app(client, private_key, index, app_args, rekey_to, foreign_assets=None):
     # declare sender
     sender = account.address_from_private_key(private_key)
     print("Call from account:", sender)
@@ -261,10 +261,10 @@ def create_asset(client, private_key):
         default_frozen=False,
         unit_name="C3pio",
         asset_name="C3coin",
-        manager=None,
+        manager=sender,
         reserve=sender,
-        freeze=None,
-        clawback=None,
+        freeze=sender,
+        clawback=sender,
         strict_empty_address_check=False,
         url=None, 
         decimals=0)

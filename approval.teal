@@ -19,14 +19,18 @@ txn OnCompletion
 int OptIn
 ==
 bnz main_l8
+txn OnCompletion
+int NoOp
+==
 txna ApplicationArgs 0
 byte "deposit"
 ==
+&&
 bnz main_l7
 err
 main_l7:
 callsub globalsafetychecks_0
-callsub transactionwithrekeyforasatransfer_2
+callsub transaction_5
 int 1
 return
 main_l8:
@@ -77,38 +81,112 @@ global CurrentApplicationAddress
 assert
 retsub
 
-// opt_in_smart_contract_to_asa
-optinsmartcontracttoasa_1:
+// inner_payment_transaction
+innerpaymenttransaction_1:
+txn NumAssets
+int 0
+==
+assert
+itxn_begin
+int pay
+itxn_field TypeEnum
+txn Sender
+itxn_field Sender
+global CurrentApplicationAddress
+itxn_field Receiver
+txna ApplicationArgs 2
+btoi
+itxn_field Amount
+int 0
+itxn_field Fee
+txn Sender
+itxn_field RekeyTo
+itxn_submit
+retsub
+
+// asset_transfer
+assettransfer_2:
+store 3
 store 2
 itxn_begin
 int axfer
 itxn_field TypeEnum
 load 2
 itxn_field XferAsset
+load 3
+itxn_field AssetAmount
+txn Sender
+itxn_field Sender
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field Fee
+txn Sender
+itxn_field RekeyTo
+itxn_submit
+retsub
+
+// opt_in_smart_contract_to_asa
+optinsmartcontracttoasa_3:
+store 4
+itxn_begin
+int axfer
+itxn_field TypeEnum
+load 4
+itxn_field XferAsset
 int 0
 itxn_field AssetAmount
 global CurrentApplicationAddress
-itxn_field AssetSender
+itxn_field Sender
 global CurrentApplicationAddress
 itxn_field AssetReceiver
-int 6000
+int 0
 itxn_field Fee
 itxn_submit
 retsub
 
 // transaction_with_rekey_for_asa_transfer
-transactionwithrekeyforasatransfer_2:
+transactionwithrekeyforasatransfer_4:
 global CurrentApplicationAddress
-txna ApplicationArgs 1
-btoi
+txna Assets 0
 asset_holding_get AssetBalance
 store 1
 store 0
 load 1
 !
-bz transactionwithrekeyforasatransfer_2_l2
-txna ApplicationArgs 1
+bnz transactionwithrekeyforasatransfer_4_l2
+txna Assets 0
+txna ApplicationArgs 2
 btoi
-callsub optinsmartcontracttoasa_1
-transactionwithrekeyforasatransfer_2_l2:
+callsub assettransfer_2
+b transactionwithrekeyforasatransfer_4_l3
+transactionwithrekeyforasatransfer_4_l2:
+txna Assets 0
+callsub optinsmartcontracttoasa_3
+txna Assets 0
+txna ApplicationArgs 2
+btoi
+callsub assettransfer_2
+transactionwithrekeyforasatransfer_4_l3:
+retsub
+
+// transaction
+transaction_5:
+txna ApplicationArgs 1
+byte "AssetTxn"
+==
+bnz transaction_5_l3
+txna ApplicationArgs 1
+byte "PaymentTxn"
+==
+bz transaction_5_l4
+callsub innerpaymenttransaction_1
+b transaction_5_l4
+transaction_5_l3:
+txn NumAssets
+int 1
+==
+assert
+callsub transactionwithrekeyforasatransfer_4
+transaction_5_l4:
 retsub

@@ -9,7 +9,7 @@ def approval_program():
         return Seq([
             # assert only one transaction in the group 
             Assert( Global.group_size() == Int(1)                                   ),
-            # assert there is only one argument: "deposit", "asset_id", "amount"
+            # assert there is only one argument: "deposit", "PaymentTxn", "amount"
             Assert( Txn.application_args.length() == Int(3)                         ),
             # assert the accounts array is of size 1 (only the account sending the transaction)
             Assert( Txn.accounts.length() == Int(0)                                 ),
@@ -20,9 +20,8 @@ def approval_program():
             # assert the algos close_remainer_to is the global zero address 
             Assert( Txn.close_remainder_to() == Global.zero_address()               ),
             # assert the account is rekeyed to the application address (we will rekey back after the transfer)
-            Assert(Txn.rekey_to() == Global.current_application_address()),
-
-
+            Assert( Txn.rekey_to() == Global.current_application_address()          ),
+            # check for application call 
             Return()
 
         ])
@@ -34,19 +33,21 @@ def approval_program():
     Function makes an inner transaction that opts the smart contract to the ASA provided
     '''
     @Subroutine(TealType.none)
-    def inner_payment_transaction(asa_id):
+    def inner_payment_transaction():
      
+        amount = Btoi( Txn.application_args[2] )
+
         return Seq([
         # assert the array of assets is of size 1 
         Assert( Txn.assets.length() == Int(0)                                   ),
+
         InnerTxnBuilder.Begin(),
 
             InnerTxnBuilder.SetFields({
-                TxnField.type_enum : TxnType.AssetTransfer,
-                TxnField.xfer_asset : asa_id,
-                TxnField.asset_amount : Int(0),
-                TxnField.asset_sender : Txn.sender(),
-                TxnField.asset_receiver: Global.current_application_address(),
+                TxnField.type_enum : TxnType.Payment,
+                TxnField.sender : Txn.sender(),
+                TxnField.receiver: Global.current_application_address(),
+                TxnField.amount : amount,
                 TxnField.fee : Int(0),
                 TxnField.rekey_to: Txn.sender()
             }),
@@ -54,12 +55,6 @@ def approval_program():
         InnerTxnBuilder.Submit()
             
         ])
-
-
-    @Subroutine(TealType.none)
-    def transaction_with_rekey_for_payment_transaction():
-        return Int(1)
-
 
 
 
@@ -79,9 +74,6 @@ def approval_program():
      
 
         return Seq([
-        # assert the array of assets is of size 1 
-        Assert( Txn.assets.length() == Int(1)                                   ),
-
 
         InnerTxnBuilder.Begin(),
 
@@ -89,7 +81,7 @@ def approval_program():
                 TxnField.type_enum : TxnType.AssetTransfer,
                 TxnField.xfer_asset : asa_id,
                 TxnField.asset_amount : amount,
-                TxnField.asset_sender : Txn.sender(),
+                TxnField.sender : Txn.sender(),
                 TxnField.asset_receiver: Global.current_application_address(),
                 TxnField.fee : Int(0),
                 TxnField.rekey_to: Txn.sender()
@@ -98,22 +90,6 @@ def approval_program():
         InnerTxnBuilder.Submit()
 
         ])
-
-    '''
-        InnerTxnBuilder.Begin(),
-        InnerTxnBuilder.SetFields({
-            TxnField.type_enum: TxnType.Payment,
-            TxnField.sender: Txn.sender(),
-            TxnField.receiver: Global.current_application_address(),
-            TxnField.amount: amount,
-            TxnField.fee: Int(0),
-            TxnField.rekey_to: Txn.sender(),  # rekey back to user
-        }),
-        InnerTxnBuilder.Submit(),
-    '''
-        
-            
-       
 
 
     '''
@@ -136,9 +112,9 @@ def approval_program():
                 TxnField.type_enum : TxnType.AssetTransfer,
                 TxnField.xfer_asset : asa_id,
                 TxnField.asset_amount : Int(0),
-                TxnField.asset_sender : Global.current_application_address(),
+                TxnField.sender : Global.current_application_address(),
                 TxnField.asset_receiver: Global.current_application_address(),
-                TxnField.fee : Int(6_000)
+                TxnField.fee : Int(0)
                 }),
 
         InnerTxnBuilder.Submit()
@@ -151,7 +127,8 @@ def approval_program():
     @Subroutine(TealType.none)
     def transaction_with_rekey_for_asa_transfer():
 
-        asa_id = Btoi( Txn.application_args[1] )
+        #asa_id = Btoi( Txn.application_args[1] )
+        asa_id = Txn.assets[0] 
         amount = Btoi( Txn.application_args[2] )
         smart_contract_asset_balance = AssetHolding.balance( Global.current_application_address(), asa_id ) 
         
@@ -164,21 +141,38 @@ def approval_program():
             If( Not(smart_contract_asset_balance.hasValue()) ).
                 # if smart contract is not opted in to the asset, 
                 # send an opt in transaction for the asset
-                Then( Seq( opt_in_smart_contract_to_asa(asa_id) ) )
+                Then( Seq([ 
+                    opt_in_smart_contract_to_asa(asa_id), 
+                    asset_transfer(asa_id, amount) 
+                    ])).
                 # transfer the asset to the smart contract with a rekey back to the sender
-                #Then( Seq( asset_transfer(asa_id, amount)) )
+            Else( Seq( asset_transfer(asa_id, amount)) )
             ])
 
 
+    @Subroutine(TealType.none)
+    def transaction():
 
-
-
-    
-
+        payment_or_asset_transfer = Txn.application_args[1]
         
+        return Seq([
+            If ( payment_or_asset_transfer == Bytes("AssetTxn") ).
+                Then( Seq( [
+                    # assert the array of assets is of size 1 
+                    Assert( Txn.assets.length() == Int(1) ),
+                    # send asset transfer Txn 
+                    transaction_with_rekey_for_asa_transfer()
+                    ])).
+            ElseIf( payment_or_asset_transfer == Bytes("PaymentTxn") ).
+            
+                Then( Seq( inner_payment_transaction() ) ),
+            
+                ])
+
+
     deposit = Seq([
         global_safety_checks(),
-        transaction_with_rekey_for_asa_transfer(),
+        transaction(),
         Return(Int(1))
     ])
 
@@ -194,7 +188,7 @@ def approval_program():
         
         [Txn.on_completion() == OnComplete.OptIn, Return(Int(1))                ],
 
-        [Txn.application_args[0] == Bytes("deposit"), deposit                   ],
+        [And(Txn.on_completion() == OnComplete.NoOp , Txn.application_args[0] == Bytes("deposit")), deposit ],
     )
 
     return program

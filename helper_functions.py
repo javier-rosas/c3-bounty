@@ -1,6 +1,7 @@
 import base64
 from algosdk import mnemonic, encoding
-
+from algosdk.future import transaction
+import json
 
 # helper function to compile program source
 def compile_program(client, source_code):
@@ -173,3 +174,47 @@ def print_asset_holding(algodclient, account, assetid):
             break
 
 
+def transfer_asset(algodclient, test_private_key, test_address, application_address, asset_id):
+    #creator_private_key = mnemonic.to_private_key(creator_mnemonic)
+    params = algodclient.suggested_params()
+
+    # Use the AssetTransferTxn class to transfer assets and opt-in
+    txn = transaction.AssetTransferTxn(
+        sender=test_address,
+        sp=params,
+        receiver=application_address,
+        amt=1,
+        index=asset_id)
+        
+    stxn = txn.sign(test_private_key)
+       
+    txid = algodclient.send_transaction(stxn)
+    # Wait for the transaction to be confirmed
+    confirmed_txn = wait_for_confirmation(algodclient, txid) 
+    print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))    
+
+    print_asset_holding(algodclient, test_address, asset_id)
+
+
+def payment_txn(algodclient, private_key, address):
+
+    # build transaction
+    params = algodclient.suggested_params()
+
+    receiver = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
+    amount = 1
+
+    unsigned_txn = transaction.PaymentTxn(address, params, receiver, amount, None)
+
+    # sign transaction
+    signed_txn = unsigned_txn.sign(private_key)
+
+    # submit transaction
+    txid = algodclient.send_transaction(signed_txn)
+
+    # wait for confirmation 
+   
+    result = wait_for_confirmation(algodclient, txid)  
+   
+
+    print("Transaction information: {}".format(json.dumps(result, indent=4)))
